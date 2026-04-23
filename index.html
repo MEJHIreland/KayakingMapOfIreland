@@ -34,9 +34,9 @@
 <script>
   var map = L.map('map').setView([53.3498, -6.2603], 12);
 
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '&copy; OpenStreetMap contributors'
-  }).addTo(map);
+  L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}', {
+  attribution: 'Tiles &copy; Esri'
+}).addTo(map);
 
   // Define your GPX routes here
   var routes = [
