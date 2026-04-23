@@ -2,22 +2,14 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>GPX Map Viewer</title>
+  <title>Multi GPX Viewer</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <!-- Leaflet CSS -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
 
   <style>
-    body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-    }
-
-    #map {
-      height: 100vh;
-      width: 100%;
-    }
+    body { margin: 0; font-family: Arial, sans-serif; }
+    #map { height: 100vh; }
 
     .info {
       position: absolute;
@@ -26,65 +18,75 @@
       background: white;
       padding: 10px;
       border-radius: 6px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
       z-index: 1000;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
     }
   </style>
 </head>
 <body>
 
 <div id="map"></div>
-<div class="info" id="info">Loading GPX...</div>
+<div class="info">Toggle routes (top right)</div>
 
-<!-- Leaflet JS -->
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-
-<!-- GPX plugin -->
 <script src="https://unpkg.com/leaflet-gpx/gpx.js"></script>
 
 <script>
-  // Initialize map (default to Dublin)
   var map = L.map('map').setView([53.3498, -6.2603], 12);
 
-  // Add OpenStreetMap tiles
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '&copy; OpenStreetMap contributors'
   }).addTo(map);
 
-  // Load GPX file
-  var gpx = new L.GPX("TheWicklowWay.gpx", {
-    async: true,
-    polyline_options: {
-      color: "blue",
-      weight: 4,
-      opacity: 0.75
+  // Define your GPX routes here
+  var routes = [
+    {
+      name: "The Wicklow Way",
+      file: "TheWicklowWay.gpx",
+      color: "red"
     },
-    marker_options: {
-      startIconUrl: null,
-      endIconUrl: null,
-      shadowUrl: null
-    }
+    {
+      name: "Tinahely Round",
+      file: "TinahelyRound.gpx",
+      color: "red"
+    },
+      ];
+
+  var overlays = {};
+  var boundsGroup = [];
+
+  routes.forEach(function(route) {
+    var gpxLayer = new L.GPX(route.file, {
+      async: true,
+      polyline_options: {
+        color: route.color,
+        weight: 4,
+        opacity: 0.8
+      },
+      marker_options: {
+        startIconUrl: null,
+        endIconUrl: null,
+        shadowUrl: null
+      }
+    });
+
+    gpxLayer.on('loaded', function(e) {
+      boundsGroup.push(e.target.getBounds());
+
+      // Fit map to all routes once loaded
+      if (boundsGroup.length === routes.length) {
+        var group = L.featureGroup();
+        boundsGroup.forEach(b => group.extend(b));
+        map.fitBounds(group.getBounds());
+      }
+    });
+
+    overlays[route.name] = gpxLayer;
   });
 
-  // When GPX is loaded
-  gpx.on('loaded', function(e) {
-    map.fitBounds(e.target.getBounds());
+  // Add layer control (toggle UI)
+  L.control.layers(null, overlays, { collapsed: false }).addTo(map);
 
-    // Display basic info
-    var info = document.getElementById("info");
-    info.innerHTML = `
-      <b>Route loaded</b><br>
-      Distance: ${(e.target.get_distance() / 1000).toFixed(2)} km<br>
-      Elevation gain: ${e.target.get_elevation_gain().toFixed(0)} m
-    `;
-  });
-
-  // Error handling
-  gpx.on('error', function() {
-    document.getElementById("info").innerHTML = "Failed to load GPX file.";
-  });
-
-  gpx.addTo(map);
 </script>
 
 </body>
