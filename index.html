@@ -119,9 +119,13 @@
   boundsGroup.push(gpx.getBounds());
 
   if (boundsGroup.length === routes.length) {
-    var group = L.featureGroup(boundsGroup.map(b => L.rectangle(b)));
-    map.fitBounds(group.getBounds());
-  }
+  var group = L.featureGroup();
+  boundsGroup.forEach(b => group.extend(b));
+
+  map.fitBounds(group.getBounds(), {
+    padding: [40, 40]
+  });
+}
 
   // ✅ SINGLE RELIABLE CLICK HANDLER
   gpx.on('click', function(e) {
