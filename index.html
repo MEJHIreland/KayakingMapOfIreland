@@ -111,7 +111,7 @@
       }
     });
 
-   gpxLayer.on('loaded', function(e) {
+  gpxLayer.on('loaded', function(e) {
 
   var gpx = e.target;
   var distance = (gpx.get_distance() / 1000).toFixed(2);
@@ -119,25 +119,22 @@
   boundsGroup.push(gpx.getBounds());
 
   if (boundsGroup.length === routes.length) {
-    var group = L.featureGroup();
-    boundsGroup.forEach(b => group.extend(b));
+    var group = L.featureGroup(boundsGroup.map(b => L.rectangle(b)));
     map.fitBounds(group.getBounds());
   }
 
-  // 🔥 FORCE CLICK ON EVERY SEGMENT
-  gpx.eachLayer(function(layer) {
-    layer.on('click', function(e) {
+  // ✅ SINGLE RELIABLE CLICK HANDLER
+  gpx.on('click', function(e) {
 
-      L.popup()
-        .setLatLng(e.latlng)
-        .setContent(`
-          <b>${route.name}</b><br>
-          Type: ${route.type}<br>
-          Distance: ${distance} km
-        `)
-        .openOn(map);
+    L.popup()
+      .setLatLng(e.latlng)
+      .setContent(`
+        <b>${route.name}</b><br>
+        Type: ${route.type}<br>
+        Distance: ${distance} km
+      `)
+      .openOn(map);
 
-    });
   });
 
 });
