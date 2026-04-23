@@ -111,7 +111,7 @@
       }
     });
 
-    gpxLayer.on('loaded', function(e) {
+   gpxLayer.on('loaded', function(e) {
 
   var gpx = e.target;
   var distance = (gpx.get_distance() / 1000).toFixed(2);
@@ -124,12 +124,21 @@
     map.fitBounds(group.getBounds());
   }
 
-  // ✅ Attach popup to entire GPX layer properly
-  gpx.bindPopup(`
-    <b>${route.name}</b><br>
-    Type: ${route.type}<br>
-    Distance: ${distance} km
-  `);
+  // 🔥 FORCE CLICK ON EVERY SEGMENT
+  gpx.eachLayer(function(layer) {
+    layer.on('click', function(e) {
+
+      L.popup()
+        .setLatLng(e.latlng)
+        .setContent(`
+          <b>${route.name}</b><br>
+          Type: ${route.type}<br>
+          Distance: ${distance} km
+        `)
+        .openOn(map);
+
+    });
+  });
 
 });
 
