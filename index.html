@@ -20,59 +20,88 @@
       border-radius: 6px;
       z-index: 1000;
       box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+      font-size: 14px;
+    }
+
+    .info button {
+      margin: 2px 0;
+      width: 100%;
+      cursor: pointer;
     }
   </style>
 </head>
 <body>
 
 <div id="map"></div>
-<div class="info">Toggle routes (top right)</div>
+
+<div class="info">
+  <b>Filters</b><br>
+  <button onclick="filterRoutes('all')">All</button>
+  <button onclick="filterRoutes('hike')">Hikes</button>
+  <button onclick="filterRoutes('kayak')">Kayaking</button>
+</div>
 
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 <script src="https://unpkg.com/leaflet-gpx/gpx.js"></script>
 
 <script>
-  var map = L.map('map').setView([53.3498, -6.2603], 12);
+  // =====================
+  // MAP INIT
+  // =====================
+  var map = L.map('map').setView([53.5, -6.3], 8);
 
   L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
-  maxZoom: 17,
-  attribution: 'Map data: &copy; OpenStreetMap contributors, SRTM | Map style: OpenTopoMap'
-}).addTo(map);
+    maxZoom: 17,
+    attribution: 'Map data: &copy; OpenStreetMap contributors, SRTM | OpenTopoMap'
+  }).addTo(map);
 
-  // Define your GPX routes here
+  // =====================
+  // ROUTES DATA
+  // =====================
   var routes = [
     {
       name: "The Wicklow Way",
       file: "TheWicklowWay.gpx",
-      color: "red"
+      color: "red",
+      type: "hike"
     },
     {
       name: "Tinahely Round",
       file: "TinahelyRound.gpx",
-      color: "#FF00FB"
+      color: "#FF00FB",
+      type: "hike"
     },
     {
       name: "The Liffey Descent",
       file: "TheLiffeyDescent.gpx",
-      color: "#1414FF"
+      color: "#1414FF",
+      type: "kayak"
     },
     {
       name: "The Grand Canal",
       file: "TheGrandCanal.gpx",
-      color: "#27F5EB"
-    },
-      ];
+      color: "#27F5EB",
+      type: "kayak"
+    }
+  ];
 
-  var overlays = {};
+  // =====================
+  // STORAGE
+  // =====================
+  var layers = [];
   var boundsGroup = [];
 
+  // =====================
+  // LOAD GPX ROUTES
+  // =====================
   routes.forEach(function(route) {
+
     var gpxLayer = new L.GPX(route.file, {
       async: true,
       polyline_options: {
         color: route.color,
         weight: 4,
-        opacity: 0.8
+        opacity: 0.85
       },
       marker_options: {
         startIconUrl: null,
@@ -82,21 +111,45 @@
     });
 
     gpxLayer.on('loaded', function(e) {
+
       boundsGroup.push(e.target.getBounds());
 
-      // Fit map to all routes once loaded
+      // Fit all routes once loaded
       if (boundsGroup.length === routes.length) {
         var group = L.featureGroup();
         boundsGroup.forEach(b => group.extend(b));
         map.fitBounds(group.getBounds());
       }
+
+      // Popup info
+      var gpx = e.target;
+      gpx.bindPopup(`
+        <b>${route.name}</b><br>
+        Type: ${route.type}<br>
+        Distance: ${(gpx.get_distance() / 1000).toFixed(2)} km
+      `);
     });
 
-    overlays[route.name] = gpxLayer;
+    layers.push({ route, layer: gpxLayer });
+
+    gpxLayer.addTo(map);
   });
 
-  // Add layer control (toggle UI)
-  L.control.layers(null, overlays, { collapsed: false }).addTo(map);
+  // =====================
+  // FILTER FUNCTION
+  // =====================
+  function filterRoutes(type) {
+
+    layers.forEach(item => {
+
+      if (type === "all" || item.route.type === type) {
+        item.layer.addTo(map);
+      } else {
+        map.removeLayer(item.layer);
+      }
+
+    });
+  }
 
 </script>
 
