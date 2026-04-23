@@ -24,7 +24,7 @@
     }
 
     .info button {
-      margin: 2px 0;
+      margin: 3px 0;
       width: 100%;
       cursor: pointer;
     }
@@ -89,6 +89,7 @@
   // STORAGE
   // =====================
   var layers = [];
+  var overlays = {};
   var boundsGroup = [];
 
   // =====================
@@ -112,31 +113,41 @@
 
     gpxLayer.on('loaded', function(e) {
 
-      boundsGroup.push(e.target.getBounds());
+      var gpx = e.target;
+      var distance = (gpx.get_distance() / 1000).toFixed(2);
 
-      // Fit all routes once loaded
+      boundsGroup.push(gpx.getBounds());
+
       if (boundsGroup.length === routes.length) {
         var group = L.featureGroup();
         boundsGroup.forEach(b => group.extend(b));
         map.fitBounds(group.getBounds());
       }
 
-      // Popup info
-      var gpx = e.target;
-      gpx.bindPopup(`
-        <b>${route.name}</b><br>
-        Type: ${route.type}<br>
-        Distance: ${(gpx.get_distance() / 1000).toFixed(2)} km
-      `);
+      // CLICK POPUP (route line)
+      gpx.on('click', function() {
+        gpx.bindPopup(`
+          <b>${route.name}</b><br>
+          Type: ${route.type}<br>
+          Distance: ${distance} km
+        `).openPopup();
+      });
+
     });
 
     layers.push({ route, layer: gpxLayer });
+    overlays[route.name] = gpxLayer;
 
     gpxLayer.addTo(map);
   });
 
   // =====================
-  // FILTER FUNCTION
+  // LEGEND (RESTORED)
+  // =====================
+  L.control.layers(null, overlays, { collapsed: false }).addTo(map);
+
+  // =====================
+  // FILTER SYSTEM
   // =====================
   function filterRoutes(type) {
 
@@ -149,6 +160,7 @@
       }
 
     });
+
   }
 
 </script>
