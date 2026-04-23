@@ -113,27 +113,25 @@
 
     gpxLayer.on('loaded', function(e) {
 
-      var gpx = e.target;
-      var distance = (gpx.get_distance() / 1000).toFixed(2);
+  var gpx = e.target;
+  var distance = (gpx.get_distance() / 1000).toFixed(2);
 
-      boundsGroup.push(gpx.getBounds());
+  boundsGroup.push(gpx.getBounds());
 
-      if (boundsGroup.length === routes.length) {
-        var group = L.featureGroup();
-        boundsGroup.forEach(b => group.extend(b));
-        map.fitBounds(group.getBounds());
-      }
+  if (boundsGroup.length === routes.length) {
+    var group = L.featureGroup();
+    boundsGroup.forEach(b => group.extend(b));
+    map.fitBounds(group.getBounds());
+  }
 
-      // CLICK POPUP (route line)
-      gpx.on('click', function() {
-        gpx.bindPopup(`
-          <b>${route.name}</b><br>
-          Type: ${route.type}<br>
-          Distance: ${distance} km
-        `).openPopup();
-      });
+  // ✅ Attach popup to entire GPX layer properly
+  gpx.bindPopup(`
+    <b>${route.name}</b><br>
+    Type: ${route.type}<br>
+    Distance: ${distance} km
+  `);
 
-    });
+});
 
     layers.push({ route, layer: gpxLayer });
     overlays[route.name] = gpxLayer;
